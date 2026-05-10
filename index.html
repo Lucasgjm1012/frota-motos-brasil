@@ -297,6 +297,7 @@ html,body{height:100%;overflow:hidden;margin:0}
 
 <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/plotly.js-dist-min@2.35.2/plotly.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" crossorigin="anonymous"></script>
 <script type="module">
 import * as duckdb from 'https://cdn.jsdelivr.net/npm/@duckdb/duckdb-wasm@1.29.0/+esm';
 
@@ -578,29 +579,33 @@ async function renderMun(d){
   await Plotly.react('g-munis',[trace],layout,{displayModeBar:false,responsive:true});
 }
 
-/* ── Download CSV ─────────────────────────────────────────── */
-function downloadCSV(chartId){
-  const c=chartCache[chartId];
-  if(!c)return;
-  /* Re-query raw data for CSV using the last query result embedded in trace */
+/* ── Download XLSX ────────────────────────────────────────── */
+const DL_LABELS={
+  'g-fab':    {col1:'Fabricante',    col2:'Total de Motos', sheet:'Top Fabricantes'},
+  'g-modelos':{col1:'Marca / Modelo',col2:'Total de Motos', sheet:'Top Modelos'},
+  'g-anos':   {col1:'Ano de Fabricação',col2:'Total de Motos',sheet:'Evolução por Ano'},
+  'g-munis':  {col1:'Município / UF',col2:'Total de Motos', sheet:'Top Municípios'},
+};
+function downloadXLSX(chartId){
+  const c=chartCache[chartId];if(!c)return;
   const t=c.traces[0];
-  let rows,headers;
+  const meta=DL_LABELS[chartId]||{col1:'Label',col2:'Total',sheet:'Dados'};
+  let rows;
   if(t.orientation==='h'){
-    /* horizontal bar: x=values, y=labels */
-    headers=['Label','Total'];
-    rows=(t.y||[]).map((lbl,i)=>[`"${lbl}"`,t.x[i]].join(','));
-  } else if(t.type==='scatter'){
-    headers=['Ano','Total'];
-    rows=(t.x||[]).map((x,i)=>[x,t.y[i]].join(','));
-  } else {
-    headers=['Label','Total'];
-    rows=(t.x||[]).map((lbl,i)=>[`"${lbl}"`,t.y[i]].join(','));
+    rows=(t.y||[]).map((lbl,i)=>({[meta.col1]:lbl,[meta.col2]:t.x[i]}));
+  }else if(t.type==='scatter'){
+    rows=(t.x||[]).map((x,i)=>({[meta.col1]:x,[meta.col2]:t.y[i]}));
+  }else{
+    rows=(t.x||[]).map((lbl,i)=>({[meta.col1]:lbl,[meta.col2]:t.y[i]}));
   }
-  const csv=[headers.join(','),...rows].join('\n');
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
-  a.download=`frota_motos_${chartId}_${new Date().toISOString().slice(0,10)}.csv`;
-  a.click();URL.revokeObjectURL(a.href);
+  const ws=XLSX.utils.json_to_sheet(rows);
+  /* Largura automática das colunas */
+  const maxW=rows.reduce((m,r)=>Math.max(m,String(r[meta.col1]).length),meta.col1.length);
+  ws['!cols']=[{wch:Math.min(maxW+2,50)},{wch:16}];
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,meta.sheet);
+  const ts=new Date().toISOString().slice(0,10);
+  XLSX.writeFile(wb,`frota_motos_${chartId}_${ts}.xlsx`);
 }
 
 /* ── Modal expand ─────────────────────────────────────────── */
@@ -692,10 +697,10 @@ function initSelects(){
     onChange:v=>{filters.municipio=v||[];update();}});
   tsMun.disable();
 
-  tsAnoIni=new TomSelect('#f-ano-ini',{create:false,
+  tsAnoIni=new TomSelect('#f-ano-ini',{create:false,maxOptions:false,
     onChange:v=>{filters.anoIni=Number(v);update();}});
 
-  tsAnoFim=new TomSelect('#f-ano-fim',{create:false,
+  tsAnoFim=new TomSelect('#f-ano-fim',{create:false,maxOptions:false,
     onChange:v=>{filters.anoFim=Number(v);update();}});
 }
 
@@ -718,7 +723,7 @@ function wireEvents(){
   /* Download / Expand via event delegation */
   document.addEventListener('click',e=>{
     const btn=e.target.closest('.chart-btn');if(!btn)return;
-    if(btn.dataset.dl)  downloadCSV(btn.dataset.dl);
+    if(btn.dataset.dl)  downloadXLSX(btn.dataset.dl);
     if(btn.dataset.exp) openModal(btn.dataset.exp);
   });
 
