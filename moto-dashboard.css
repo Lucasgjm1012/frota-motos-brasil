@@ -1,0 +1,497 @@
+/* =============================================================
+   Moto Dashboard — Identidade Visual
+   -------------------------------------------------------------
+   Paleta tonal de azul/cyan, tipografia Montserrat,
+   espaçamento generoso e geometria suave.
+   A proposta é: quieto, técnico, premium.
+   ============================================================= */
+
+
+/* ----- 1. Importação da fonte --------------------------------
+   Montserrat com os pesos que o sistema realmente usa.
+   Não importe pesos a mais — peso de fonte tem custo de rede e
+   diluiu a hierarquia se você usar tudo. Ficamos em 4 pesos +
+   itálico no peso 400.
+   ------------------------------------------------------------- */
+
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap');
+
+
+/* ----- 2. Tokens (variáveis) ---------------------------------
+   Toda decisão de cor, espaço, raio e fonte vive aqui.
+   Quando precisar mudar o sistema, mude o token — nunca o
+   componente. É isso que dá consistência ao dash.
+   ------------------------------------------------------------- */
+
+:root {
+
+  /* --- Cores ------------------------------------------------- */
+  /* Os 5 hexadecimais da paleta, renomeados pela função.
+     Os nomes "primary, surface, ink" descrevem o papel,
+     não a cor. Isso te dá liberdade de trocar a paleta
+     no futuro sem renomear classes.                            */
+
+  --md-ink:        #1b4965;  /* texto principal, números grandes, header */
+  --md-primary:    #5fa8d3;  /* ações, gráficos, links, foco */
+  --md-accent:     #62b6cb;  /* texto secundário, ícones, divisores */
+  --md-mist:       #bee9e8;  /* superfícies destaque, cards de status OK */
+  --md-sky:        #cae9ff;  /* bordas finas, hover sutis */
+
+  /* Neutros derivados — o sistema NÃO usa preto puro.
+     Tudo que parece "preto" no dash é --md-ink. Tudo que
+     parece "branco" tem um leve viés azulado para amarrar
+     com a paleta.                                              */
+
+  --md-bg:         #f4f9fc;  /* fundo da página */
+  --md-surface:    #ffffff;  /* superfície dos cards */
+  --md-border:     #cae9ff;  /* borda padrão (1px) */
+  --md-muted:      rgba(98, 182, 203, 0.55);  /* divisores internos */
+
+  /* Estados semânticos — derivados da paleta para manter coesão.
+     Sucesso fica no cyan (não verde) porque o dash inteiro é
+     azul/cyan; quebrar a paleta para um verde alarmaria mais
+     do que informaria.                                         */
+
+  --md-success:    #1b4965;
+  --md-success-bg: #bee9e8;
+  --md-warning:    #b25e1c;  /* única quebra: alerta precisa contrastar */
+  --md-warning-bg: #fce8d4;
+  --md-danger:     #8b1f1f;
+  --md-danger-bg:  #fbe1e1;
+
+
+  /* --- Tipografia ------------------------------------------- */
+
+  --md-font:       'Montserrat', system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  /* Escala tipográfica em rem.
+     Pulos generosos (12 → 14 → 16 → 22 → 28 → 36) para que a
+     hierarquia seja óbvia mesmo de longe. Dashboards são lidos
+     em diagonal.                                                */
+
+  --md-text-xs:    0.6875rem;  /* 11px — labels uppercase, metadados */
+  --md-text-sm:    0.75rem;    /* 12px — texto auxiliar */
+  --md-text-base:  0.875rem;   /* 14px — corpo */
+  --md-text-md:    1rem;       /* 16px — títulos de card */
+  --md-text-lg:    1.375rem;   /* 22px — título de seção */
+  --md-text-xl:    1.75rem;    /* 28px — números de métrica */
+  --md-text-2xl:   2.25rem;    /* 36px — número herói (velocímetro) */
+
+  /* Tracking — letras um pouco mais apertadas em números grandes
+     (luxo) e mais espaçadas em labels minúsculos (legibilidade). */
+
+  --md-track-tight: -0.02em;
+  --md-track-wide:   0.08em;
+
+
+  /* --- Espaçamento ----------------------------------------- */
+  /* Escala de 4px: previsível, encaixa em qualquer grid.
+     Use SEMPRE estas variáveis, nunca números soltos.          */
+
+  --md-space-1:    4px;
+  --md-space-2:    8px;
+  --md-space-3:    12px;
+  --md-space-4:    16px;
+  --md-space-5:    20px;
+  --md-space-6:    24px;
+  --md-space-8:    32px;
+  --md-space-10:   40px;
+  --md-space-12:   48px;
+
+
+  /* --- Geometria ------------------------------------------- */
+
+  --md-radius-sm:  6px;   /* botões, badges */
+  --md-radius-md:  10px;  /* inputs, swatches */
+  --md-radius-lg:  12px;  /* cards (padrão) */
+  --md-radius-xl:  16px;  /* containers principais */
+
+  /* Bordas e elevação.
+     A regra é: o dash quase não usa sombra. Profundidade vem
+     de borda fina + cor de fundo. Sombra só na ação primária. */
+
+  --md-border-thin: 1px solid var(--md-border);
+  --md-shadow-sm:   0 1px 2px rgba(27, 73, 101, 0.04);
+  --md-shadow-md:   0 4px 12px rgba(27, 73, 101, 0.08);
+
+
+  /* --- Movimento ------------------------------------------- */
+
+  --md-ease:       cubic-bezier(0.2, 0.8, 0.2, 1);
+  --md-duration:   180ms;
+}
+
+
+/* ----- 3. Reset suave ---------------------------------------
+   Não é um reset agressivo. Só nivela o que importa para que a
+   tipografia e o box model fiquem previsíveis em todo browser.
+   ------------------------------------------------------------- */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: var(--md-font);
+  font-size: var(--md-text-base);
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--md-ink);
+  background: var(--md-bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: 'tnum' 1, 'lnum' 1;
+  /* tnum = números tabulares (alinhados em colunas).
+     Crítico em dashboards: 88 km/h e 102 km/h precisam ter
+     a mesma largura para o olho comparar.                     */
+}
+
+
+/* ----- 4. Tipografia hierárquica -----------------------------
+   Cada elemento tem um papel claro. Hierarquia em dash não é
+   ornamento — é navegação. O usuário deve achar O QUE importa
+   em ≤ 1 segundo.
+   ------------------------------------------------------------- */
+
+.md-display {
+  /* Número herói: velocímetro, RPM em destaque, valor central. */
+  font-size: var(--md-text-2xl);
+  font-weight: 700;
+  letter-spacing: var(--md-track-tight);
+  line-height: 1;
+  color: var(--md-ink);
+}
+
+.md-metric {
+  /* Número de métrica em card pequeno. */
+  font-size: var(--md-text-xl);
+  font-weight: 700;
+  letter-spacing: var(--md-track-tight);
+  line-height: 1.1;
+  color: var(--md-ink);
+}
+
+.md-metric .md-unit {
+  /* Unidade colada no número (km/h, V, °C) — vem mais leve
+     porque é redundante com o contexto.                        */
+  font-size: var(--md-text-sm);
+  font-weight: 500;
+  color: var(--md-accent);
+  margin-left: 2px;
+}
+
+.md-title {
+  /* Título de seção do dash. */
+  font-size: var(--md-text-lg);
+  font-weight: 700;
+  letter-spacing: var(--md-track-tight);
+  color: var(--md-ink);
+  margin: 0;
+}
+
+.md-card-title {
+  /* Título dentro de um card. */
+  font-size: var(--md-text-md);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--md-ink);
+  margin: 0;
+}
+
+.md-label {
+  /* Label maiúsculo de category — uppercase com tracking largo
+     vira a "etiqueta" visual do dashboard. Use com moderação:
+     todo card tem 1, no máximo.                                */
+  font-size: var(--md-text-xs);
+  font-weight: 500;
+  letter-spacing: var(--md-track-wide);
+  text-transform: uppercase;
+  color: var(--md-primary);
+}
+
+.md-caption {
+  /* Texto auxiliar embaixo da métrica (ex.: "Média 64 km/h").  */
+  font-size: var(--md-text-sm);
+  font-weight: 400;
+  color: var(--md-accent);
+}
+
+.md-italic {
+  /* Itálico só em valores secundários ou de manutenção.
+     Reservar o itálico dá peso quando ele aparece.             */
+  font-style: italic;
+}
+
+.md-mono {
+  /* Para hex codes, tempo cronometrado, dados numéricos finos. */
+  font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  font-size: var(--md-text-sm);
+}
+
+
+/* ----- 5. Layout do dash -------------------------------------
+   ESTA É A PARTE QUE MAIS IMPORTA. Um dashboard "premium" não
+   é um dashboard com efeitos — é um dashboard alinhado.
+   ------------------------------------------------------------- */
+
+/* Container externo: limita a largura e dá ar nas bordas.
+   Sem isso, em telas grandes o dash vira uma planície e perde
+   foco. 1280px é o ponto onde 4 colunas ainda respiram.         */
+
+.md-shell {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: var(--md-space-8) var(--md-space-6);
+}
+
+/* Cabeçalho do dash: linha única, baseline alinhada.
+   Saudação à esquerda, status/usuário à direita. Borda
+   inferior fina marca a separação sem precisar de espaço.       */
+
+.md-topbar {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding-bottom: var(--md-space-5);
+  border-bottom: var(--md-border-thin);
+  margin-bottom: var(--md-space-6);
+}
+
+/* Linha de KPIs: 4 colunas iguais.
+   Em dash de moto, são tipicamente: Velocidade, Autonomia,
+   RPM, Temperatura. Use auto-fit para virar 2 colunas no
+   mobile sem precisar de media query.                           */
+
+.md-kpi-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--md-space-4);
+  margin-bottom: var(--md-space-5);
+}
+
+/* Linha principal: gráfico + lateral.
+   2/3 + 1/3 é a proporção áurea aproximada de leitura: o olho
+   pousa no gráfico grande, depois confere o status.             */
+
+.md-main-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: var(--md-space-5);
+  margin-bottom: var(--md-space-5);
+}
+
+/* Linha secundária: 3 colunas iguais para histórico, viagens,
+   manutenções etc.                                              */
+
+.md-secondary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--md-space-4);
+}
+
+/* Em telas estreitas, o grid principal vira coluna única.
+   Mantemos só esta media query — o resto se adapta sozinho
+   pelo auto-fit.                                                */
+
+@media (max-width: 900px) {
+  .md-main-grid,
+  .md-secondary-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+/* ----- 6. Card — o componente que sustenta tudo --------------
+   Um card é: superfície branca + borda 1px + radius 12 +
+   padding generoso. Nada mais. Sem sombra pesada, sem
+   gradiente, sem efeito hover dramático. A sobriedade É o
+   visual premium.
+   ------------------------------------------------------------- */
+
+.md-card {
+  background: var(--md-surface);
+  border: var(--md-border-thin);
+  border-radius: var(--md-radius-lg);
+  padding: var(--md-space-5) var(--md-space-6);
+  box-shadow: var(--md-shadow-sm);
+
+  /* Padding assimétrico (vertical menor que horizontal) deixa
+     o conteúdo "respirar para os lados", que é o que confere
+     a sensação de luxo. Padding quadrado parece formulário.    */
+}
+
+/* Variante invertida — fundo escuro, texto claro.
+   Usar em 1 KPI da linha (ex.: o RPM) cria um ponto focal sem
+   precisar de outras cores. Só 1 por linha, ou vira ruído.     */
+
+.md-card--dark {
+  background: var(--md-ink);
+  border-color: var(--md-ink);
+  color: #ffffff;
+}
+.md-card--dark .md-label    { color: var(--md-accent); }
+.md-card--dark .md-display,
+.md-card--dark .md-metric   { color: #ffffff; }
+.md-card--dark .md-caption,
+.md-card--dark .md-unit     { color: var(--md-mist); }
+
+/* Variante destaque — fundo cyan claro, ótima para o card de
+   "Status: tudo OK" ou "Próxima manutenção".                    */
+
+.md-card--accent {
+  background: var(--md-mist);
+  border-color: var(--md-mist);
+}
+
+/* Cabeçalho interno do card: título à esquerda, ação/data
+   à direita. Padronizar isso evita que cada card invente uma
+   estrutura e o dash perca ritmo.                               */
+
+.md-card-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: var(--md-space-4);
+}
+
+.md-card-head .md-card-title + .md-caption {
+  margin-top: 2px;
+}
+
+/* Divisor interno — preferimos divisor a sombra.
+   1px de cyan diluído marca seções sem peso visual.             */
+
+.md-divider {
+  height: 1px;
+  background: var(--md-muted);
+  margin: var(--md-space-4) 0;
+  border: 0;
+}
+
+
+/* ----- 7. Componentes auxiliares -----------------------------
+   Pequenos blocos que aparecem repetidos no dash. Padronizar
+   significa que o usuário aprende uma vez e reconhece sempre.
+   ------------------------------------------------------------- */
+
+/* Linha de status (label à esquerda, valor à direita).
+   O alinhamento por space-between é a coisa que mais comunica
+   "isto é um relatório", não "isto é uma página de marketing". */
+
+.md-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: var(--md-text-sm);
+  padding: var(--md-space-1) 0;
+}
+
+.md-row .md-row-key {
+  color: var(--md-ink);
+  font-weight: 400;
+}
+
+.md-row .md-row-value {
+  color: var(--md-ink);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Badge — pequena pílula de status.                            */
+
+.md-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: var(--md-text-xs);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  background: var(--md-mist);
+  color: var(--md-ink);
+}
+
+.md-badge--warning { background: var(--md-warning-bg); color: var(--md-warning); }
+.md-badge--danger  { background: var(--md-danger-bg);  color: var(--md-danger); }
+
+/* Botão primário.
+   Aqui SIM usamos a sombra azul: o botão é o único elemento
+   que pede ação, então merece a única elevação real do dash.   */
+
+.md-button {
+  font-family: inherit;
+  font-size: var(--md-text-base);
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  padding: 10px 18px;
+  border-radius: var(--md-radius-md);
+  border: 0;
+  cursor: pointer;
+  background: var(--md-ink);
+  color: #ffffff;
+  box-shadow: var(--md-shadow-md);
+  transition: transform var(--md-duration) var(--md-ease),
+              background var(--md-duration) var(--md-ease);
+}
+
+.md-button:hover  { background: #143750; }
+.md-button:active { transform: translateY(1px); }
+
+.md-button--ghost {
+  background: transparent;
+  color: var(--md-ink);
+  border: 1px solid var(--md-border);
+  box-shadow: none;
+}
+.md-button--ghost:hover { background: var(--md-sky); }
+
+/* Avatar do usuário no topbar.                                 */
+
+.md-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--md-ink);
+  color: var(--md-mist);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: var(--md-text-sm);
+  letter-spacing: 0.02em;
+}
+
+
+/* ----- 8. Foco e acessibilidade ------------------------------
+   Outline visível em qualquer elemento focável. Premium não é
+   esconder o foco — é deixar bonito.
+   ------------------------------------------------------------- */
+
+:focus-visible {
+  outline: 2px solid var(--md-primary);
+  outline-offset: 2px;
+  border-radius: var(--md-radius-sm);
+}
+
+
+/* =============================================================
+   Como aplicar — receita rápida
+   -------------------------------------------------------------
+   1. Envolva o dash em <div class="md-shell">.
+   2. Topbar:        <header class="md-topbar"> com título à
+                     esquerda e avatar/data à direita.
+   3. KPIs:          <div class="md-kpi-row"> com 4 .md-card.
+                     Marque UM com .md-card--dark para criar
+                     o ponto focal.
+   4. Conteúdo:      <div class="md-main-grid"> — gráfico em
+                     .md-card grande à esquerda, .md-card--accent
+                     com status à direita.
+   5. Numbers:       todo número-destaque usa .md-metric ou
+                     .md-display. NUNCA <h1> nu, sempre a classe.
+   6. Labels:        .md-label antes do número, .md-caption
+                     depois. Esse sanduíche é o ritmo do dash.
+   ============================================================= */

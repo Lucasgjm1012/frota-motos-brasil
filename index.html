@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Frota de Motos · Brasil</title>
+<link rel="stylesheet" href="moto-dashboard.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.min.css">
+<style>
+html,body{height:100%;overflow:hidden;margin:0}
+#app{display:flex;flex-direction:column;height:100vh}
+
+/* ── Topbar ── */
+#topbar{display:flex;align-items:center;justify-content:space-between;
+  padding:1rem 2rem;background:#fff;border-bottom:1px solid #e2eef5;
+  position:sticky;top:0;z-index:200;flex-shrink:0}
+.tb-eyebrow{margin:0 0 4px;font-size:.58rem;font-weight:600;
+  letter-spacing:.14em;color:#94b8cc}
+.tb-title{margin:0;font-size:1.45rem;font-weight:700;color:#1b4965;
+  letter-spacing:-.025em;line-height:1}
+.tb-right{display:flex;align-items:center;gap:10px}
+#active-tag{font-size:.68rem;color:#1b4965;background:#f0f7fb;
+  border:1px solid #e2eef5;border-radius:20px;padding:5px 16px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:500px}
+#btn-reset{background:transparent;border:1px solid #be2f2f;border-radius:20px;
+  color:#be2f2f;cursor:pointer;font-size:.7rem;font-weight:600;
+  font-family:inherit;letter-spacing:.04em;padding:5px 16px;
+  transition:all .18s;white-space:nowrap}
+#btn-reset:hover{background:#be2f2f;color:#fff}
+
+/* ── Body ── */
+#body-wrap{display:flex;flex:1;overflow:hidden}
+
+/* ── Sidebar ── */
+#sidebar{width:255px;flex-shrink:0;padding:1.5rem 1.2rem;
+  background:#f0f5f8;border-right:1px solid #e2eef5;overflow-y:auto}
+.sb-sec{margin-bottom:1.3rem}
+.sb-lbl{margin:0 0 7px;font-size:.6rem;font-weight:600;
+  letter-spacing:.13em;text-transform:uppercase;color:#94b8cc}
+.sb-sublbl{margin:0 0 5px;font-size:.58rem;font-weight:600;
+  letter-spacing:.1em;text-transform:uppercase;color:#94b8cc}
+.yr-row{display:flex;gap:8px}
+.yr-col{flex:1}
+.sb-hr{border:none;border-top:1px solid #e2eef5;margin:.5rem 0 1rem}
+.sb-hint{font-size:.65rem;color:#94b8cc;line-height:1.5;margin:0}
+
+/* ── Main ── */
+#main-content{flex:1;padding:1.4rem;overflow-y:auto}
+
+/* ── KPIs ── */
+#kpi-row{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.kpi-card{background:#fff;border:1px solid #e2eef5;border-radius:14px;
+  padding:1.5rem 1.6rem;flex:1;min-width:140px}
+.kpi-card.feat{background:#1b4965;border-color:#1b4965}
+.kpi-lbl{margin:0 0 18px;font-size:.6rem;font-weight:600;
+  letter-spacing:.14em;text-transform:uppercase;color:#94b8cc}
+.kpi-card.feat .kpi-lbl{color:#bee9e8}
+.kpi-val{font-size:2.6rem;font-weight:700;color:#1b4965;
+  letter-spacing:-.04em;line-height:1}
+.kpi-card.feat .kpi-val{color:#fff}
+
+/* ── Charts ── */
+.chart-row{display:flex;gap:12px;margin-bottom:12px}
+.chart-card{background:#fff;border:1px solid #e2eef5;border-radius:14px;
+  padding:1.4rem 1.6rem;flex:1;margin-bottom:12px}
+.chart-row .chart-card{margin-bottom:0}
+.chart-head{display:flex;justify-content:space-between;align-items:center;
+  margin-bottom:14px}
+.chart-lbl{margin:0;font-size:.6rem;font-weight:600;letter-spacing:.14em;
+  text-transform:uppercase;color:#94b8cc}
+.chart-btns{display:flex;gap:6px}
+.chart-btn{background:transparent;border:1px solid #e2eef5;color:#94b8cc;
+  cursor:pointer;border-radius:6px;padding:3px 9px;font-size:.85rem;
+  line-height:1.5;transition:all .18s;font-family:inherit}
+.chart-btn:hover{background:#f0f5f8;color:#1b4965}
+
+/* ── Modal ── */
+#modal-overlay{display:none;position:fixed;inset:0;
+  background:rgba(27,73,101,.6);z-index:999;
+  justify-content:center;align-items:center;backdrop-filter:blur(8px)}
+#modal-overlay.vis{display:flex}
+#modal-box{background:#fff;border-radius:16px;padding:1.6rem 2rem;
+  width:calc(100vw - 80px);height:calc(100vh - 80px);max-width:1600px;
+  border:1px solid #e2eef5;display:flex;flex-direction:column}
+#modal-head{display:flex;justify-content:space-between;align-items:center;
+  margin-bottom:16px;flex-shrink:0}
+#modal-title{margin:0;font-size:.6rem;font-weight:600;letter-spacing:.14em;
+  text-transform:uppercase;color:#94b8cc}
+#modal-close{background:transparent;border:1px solid #e2eef5;color:#94b8cc;
+  cursor:pointer;border-radius:8px;padding:4px 12px;font-size:.9rem;
+  font-weight:600;line-height:1;transition:all .18s;font-family:inherit}
+#modal-close:hover{background:#f0f5f8;color:#1b4965}
+#modal-graph{flex:1;min-height:0}
+
+/* ── Loading ── */
+#loading-overlay{position:fixed;inset:0;background:rgba(27,73,101,.88);
+  z-index:9999;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:16px}
+#loading-overlay.gone{display:none}
+.spin{width:40px;height:40px;border-radius:50%;
+  border:3px solid rgba(202,233,255,.25);border-top-color:#cae9ff;
+  animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.load-txt{color:#cae9ff;font-size:.85rem;font-weight:500;
+  letter-spacing:.05em;margin:0}
+
+/* ── Tom Select overrides ── */
+.ts-wrapper .ts-control{border-color:#e2eef5!important;background:#fff!important;
+  border-radius:6px!important;font-size:.82rem!important;color:#1b4965!important}
+.ts-wrapper.focus .ts-control{border-color:#5fa8d3!important;
+  box-shadow:0 0 0 2px rgba(95,168,211,.15)!important}
+.ts-wrapper .ts-control input{color:#1b4965!important}
+.ts-dropdown{border-color:#e2eef5!important;font-size:.82rem!important;
+  box-shadow:0 4px 12px rgba(27,73,101,.1)!important}
+.ts-dropdown .option.active{background:#f0f5f8!important;color:#1b4965!important}
+.ts-dropdown .option.selected,.ts-dropdown .option.selected.active{
+  background:#cae9ff!important;color:#1b4965!important}
+.ts-wrapper .item{background:#cae9ff!important;color:#1b4965!important;
+  border:none!important;border-radius:4px!important}
+.ts-wrapper .remove{color:#5fa8d3!important;border-left:1px solid #5fa8d3!important}
+.ts-wrapper.disabled .ts-control{background:#f8f8f8!important;opacity:.6}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- Topbar -->
+<header id="topbar">
+  <div>
+    <p class="tb-eyebrow">SENATRAN · 1970 – 2026 · SÉRIE HISTÓRICA</p>
+    <h1 class="tb-title">Frota de Motos · Brasil</h1>
+  </div>
+  <div class="tb-right">
+    <span id="active-tag">Sem filtros activos</span>
+    <button id="btn-reset">↺&nbsp; Limpar filtros</button>
+  </div>
+</header>
+
+<!-- Body -->
+<div id="body-wrap">
+
+  <!-- Sidebar -->
+  <aside id="sidebar">
+    <div class="sb-sec">
+      <p class="sb-lbl">Modalidade</p>
+      <select id="f-modal" multiple placeholder="Todas as modalidades…">
+        <option value="Sport">🏁  Sport</option>
+        <option value="Naked/Roadster">🔥  Naked / Roadster</option>
+        <option value="Adventure/Trail">🌍  Adventure / Trail</option>
+        <option value="Custom/Classic/Scrambler">🛠  Custom / Classic / Scrambler</option>
+        <option value="Off-road/Motocross/Enduro">🏔  Off-road / Motocross / Enduro</option>
+        <option value="Scooter">🛵  Scooter</option>
+        <option value="Outros">📦  Outros</option>
+      </select>
+    </div>
+    <div class="sb-sec">
+      <p class="sb-lbl">Fabricante</p>
+      <select id="f-fab" multiple placeholder="Todas as marcas…"></select>
+    </div>
+    <div class="sb-sec">
+      <p class="sb-lbl">Modelo</p>
+      <select id="f-mod" multiple placeholder="Selecione um fabricante…" disabled></select>
+    </div>
+    <div class="sb-sec">
+      <p class="sb-lbl">Estado</p>
+      <select id="f-uf" multiple placeholder="Todos os estados…"></select>
+    </div>
+    <div class="sb-sec">
+      <p class="sb-lbl">Município</p>
+      <select id="f-mun" multiple placeholder="Selecione um estado…" disabled></select>
+    </div>
+    <div class="sb-sec">
+      <p class="sb-lbl">Ano de fabricação</p>
+      <div class="yr-row">
+        <div class="yr-col">
+          <p class="sb-sublbl">De</p>
+          <select id="f-ano-ini"></select>
+        </div>
+        <div class="yr-col">
+          <p class="sb-sublbl">Até</p>
+          <select id="f-ano-fim"></select>
+        </div>
+      </div>
+    </div>
+    <hr class="sb-hr">
+    <p class="sb-hint">Clique num estado no mapa para filtrar.</p>
+  </aside>
+
+  <!-- Main -->
+  <main id="main-content">
+
+    <!-- KPIs -->
+    <div id="kpi-row">
+      <div class="kpi-card feat">
+        <p class="kpi-lbl">Total de Motos</p>
+        <div class="kpi-val" id="k-total">—</div>
+      </div>
+      <div class="kpi-card">
+        <p class="kpi-lbl">Modelos Distintos</p>
+        <div class="kpi-val" id="k-modelos">—</div>
+      </div>
+      <div class="kpi-card">
+        <p class="kpi-lbl">Municípios</p>
+        <div class="kpi-val" id="k-munis">—</div>
+      </div>
+      <div class="kpi-card">
+        <p class="kpi-lbl">Estados</p>
+        <div class="kpi-val" id="k-estados">—</div>
+      </div>
+      <div class="kpi-card">
+        <p class="kpi-lbl">Média por Modelo</p>
+        <div class="kpi-val" id="k-media">—</div>
+      </div>
+    </div>
+
+    <!-- Mapa + Fabricantes -->
+    <div class="chart-row">
+      <div class="chart-card" style="flex:3">
+        <div class="chart-head">
+          <p class="chart-lbl">Distribuição geográfica — clique para filtrar</p>
+        </div>
+        <div id="g-mapa" style="height:390px"></div>
+      </div>
+      <div class="chart-card" style="flex:2">
+        <div class="chart-head">
+          <p class="chart-lbl">Top fabricantes</p>
+          <div class="chart-btns">
+            <button class="chart-btn" data-dl="g-fab" title="Baixar CSV">↓</button>
+            <button class="chart-btn" data-exp="g-fab" title="Expandir">⛶</button>
+          </div>
+        </div>
+        <div id="g-fab" style="height:390px"></div>
+      </div>
+    </div>
+
+    <!-- Modelos + Evolução -->
+    <div class="chart-row">
+      <div class="chart-card" style="flex:3">
+        <div class="chart-head">
+          <p class="chart-lbl">Top 15 modelos</p>
+          <div class="chart-btns">
+            <button class="chart-btn" data-dl="g-modelos" title="Baixar CSV">↓</button>
+            <button class="chart-btn" data-exp="g-modelos" title="Expandir">⛶</button>
+          </div>
+        </div>
+        <div id="g-modelos" style="height:430px"></div>
+      </div>
+      <div class="chart-card" style="flex:2">
+        <div class="chart-head">
+          <p class="chart-lbl">Evolução por ano</p>
+          <div class="chart-btns">
+            <button class="chart-btn" data-dl="g-anos" title="Baixar CSV">↓</button>
+            <button class="chart-btn" data-exp="g-anos" title="Expandir">⛶</button>
+          </div>
+        </div>
+        <div id="g-anos" style="height:430px"></div>
+      </div>
+    </div>
+
+    <!-- Municípios -->
+    <div class="chart-card" style="margin-bottom:12px">
+      <div class="chart-head">
+        <p class="chart-lbl">Top 20 municípios</p>
+        <div class="chart-btns">
+          <button class="chart-btn" data-dl="g-munis" title="Baixar CSV">↓</button>
+          <button class="chart-btn" data-exp="g-munis" title="Expandir">⛶</button>
+        </div>
+      </div>
+      <div id="g-munis" style="height:310px"></div>
+    </div>
+
+  </main>
+</div><!-- #body-wrap -->
+
+<!-- Modal -->
+<div id="modal-overlay">
+  <div id="modal-box">
+    <div id="modal-head">
+      <p id="modal-title"></p>
+      <button id="modal-close">✕</button>
+    </div>
+    <div id="modal-graph"></div>
+  </div>
+</div>
+
+<!-- Loading -->
+<div id="loading-overlay">
+  <div class="spin"></div>
+  <p class="load-txt" id="load-txt">Iniciando DuckDB WASM…</p>
+</div>
+
+</div><!-- #app -->
+
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<script type="module">
+import * as duckdb from 'https://cdn.jsdelivr.net/npm/@duckdb/duckdb-wasm@1.29.0/+esm';
+
+/* ── Paleta ───────────────────────────────────────────────── */
+const C = {
+  deep:  '#1b4965',
+  steel: '#5fa8d3',
+  cyan:  '#62b6cb',
+  mist:  '#bee9e8',
+  label: '#94b8cc',
+  text:  '#1b4965',
+  grid:  '#e8f2f8',
+};
+const BASE_LAYOUT = {
+  paper_bgcolor:'rgba(0,0,0,0)',
+  plot_bgcolor: 'rgba(0,0,0,0)',
+  font:{family:'Montserrat,sans-serif',color:C.label,size:11},
+  hoverlabel:{bgcolor:C.deep,font:{color:'#fff',size:12},bordercolor:C.steel},
+  margin:{l:4,r:16,t:8,b:4},
+};
+
+/* ── Mapeamentos ──────────────────────────────────────────── */
+const UF_SIGLA = {
+  'ACRE':'AC','ALAGOAS':'AL','AMAPA':'AP','AMAZONAS':'AM','BAHIA':'BA',
+  'CEARA':'CE','DISTRITO FEDERAL':'DF','ESPIRITO SANTO':'ES','GOIAS':'GO',
+  'MARANHAO':'MA','MATO GROSSO':'MT','MATO GROSSO DO SUL':'MS',
+  'MINAS GERAIS':'MG','PARA':'PA','PARAIBA':'PB','PARANA':'PR',
+  'PERNAMBUCO':'PE','PIAUI':'PI','RIO DE JANEIRO':'RJ',
+  'RIO GRANDE DO NORTE':'RN','RIO GRANDE DO SUL':'RS','RONDONIA':'RO',
+  'RORAIMA':'RR','SANTA CATARINA':'SC','SAO PAULO':'SP',
+  'SERGIPE':'SE','TOCANTINS':'TO',
+};
+const SIGLA_UF = Object.fromEntries(Object.entries(UF_SIGLA).map(([k,v])=>[v,k]));
+
+/* GeoJSON: click_that_hood já tem properties.sigla = "AC", "SP" etc. */
+
+/* ── Estado global ────────────────────────────────────────── */
+let db, conn, geojson;
+const filters = {
+  modalidade:[],fabricante:[],modelo:[],uf:[],municipio:[],
+  anoIni:1970,anoFim:2026,
+};
+/* Cache de traces/layouts para modal e download */
+const chartCache = {};
+
+/* Tom Select refs */
+let tsModal,tsFab,tsMod,tsUf,tsMun,tsAnoIni,tsAnoFim;
+
+/* ── Helpers ──────────────────────────────────────────────── */
+const $  = id => document.getElementById(id);
+const setLoad = t => { $('load-txt').textContent = t; };
+const hideLoad = ()  => { $('loading-overlay').classList.add('gone'); };
+
+function fmt(n){
+  if(n==null||isNaN(n))return'—';
+  n=Math.round(n);
+  if(n>=1e6)return(n/1e6).toFixed(2)+'M';
+  if(n>=1e3)return(n/1e3).toFixed(1)+'K';
+  return n.toLocaleString('pt-BR');
+}
+function tc(s){
+  return s?s.toLowerCase().replace(/\b\w/g,c=>c.toUpperCase()):s;
+}
+
+function buildWhere(){
+  const c=[
+    `Ano_Fabricacao>=${filters.anoIni}`,
+    `Ano_Fabricacao<=${filters.anoFim}`,
+  ];
+  if(filters.modalidade.length) c.push(`Modalidade IN ('${filters.modalidade.join("','")}')`)
+  if(filters.fabricante.length) c.push(`Fabricante IN ('${filters.fabricante.join("','")}')`)
+  if(filters.modelo.length)     c.push(`Marca_Modelo IN ('${filters.modelo.join("','")}')`)
+  if(filters.uf.length)         c.push(`UF IN ('${filters.uf.join("','")}')`)
+  if(filters.municipio.length)  c.push(`Municipio IN ('${filters.municipio.join("','")}')`)
+  return c.join(' AND ');
+}
+
+/* Retorna colunas: { colName: [...values] } */
+async function q(sql){
+  const tbl = await conn.query(sql);
+  const out = {};
+  for(const f of tbl.schema.fields){
+    const arr=[];
+    for(const batch of tbl.batches){
+      const col=batch.getChild(f.name);
+      for(let i=0;i<batch.numRows;i++){
+        const v=col.get(i);
+        arr.push(typeof v==='bigint'?Number(v):v);
+      }
+    }
+    out[f.name]=arr;
+  }
+  return out;
+}
+
+/* ── DuckDB init ──────────────────────────────────────────── */
+async function initDB(){
+  setLoad('Iniciando DuckDB WASM…');
+  const bundles = duckdb.getJsDelivrBundles();
+  const bundle  = await duckdb.selectBundle(bundles);
+  const wUrl = URL.createObjectURL(
+    new Blob([`importScripts("${bundle.mainWorker}")`],{type:'text/javascript'})
+  );
+  const worker = new Worker(wUrl);
+  const logger = new duckdb.ConsoleLogger('WARNING');
+  db = new duckdb.AsyncDuckDB(logger,worker);
+  await db.instantiate(bundle.mainModule,bundle.pthreadWorker);
+  URL.revokeObjectURL(wUrl);
+
+  setLoad('Carregando frota.parquet… (aguarde)');
+  const resp = await fetch('./frota.parquet');
+  if(!resp.ok) throw new Error(`HTTP ${resp.status} ao carregar frota.parquet`);
+  const buf = await resp.arrayBuffer();
+  await db.registerFileBuffer('frota.parquet',new Uint8Array(buf));
+
+  conn = await db.connect();
+  await conn.query("CREATE VIEW frota AS SELECT * FROM read_parquet('frota.parquet')");
+}
+
+/* ── Preenche filtros estáticos ───────────────────────────── */
+async function populateFilters(){
+  setLoad('Populando filtros…');
+
+  /* Fabricante */
+  const fab = await q(`
+    SELECT Fabricante AS fab,SUM(Qtd_Veiculos) AS total
+    FROM frota WHERE Fabricante IS NOT NULL AND Fabricante!=''
+    GROUP BY Fabricante ORDER BY total DESC
+  `);
+  tsFab.addOptions(fab.fab.map((f,i)=>({value:f,text:`${f}  (${fmt(fab.total[i])})`})));
+
+  /* UF */
+  const uf = await q('SELECT DISTINCT UF FROM frota ORDER BY UF');
+  tsUf.addOptions(uf.UF.map(u=>({value:u,text:tc(u)})));
+
+  /* Anos */
+  for(let y=1970;y<=2026;y++){
+    tsAnoIni.addOption({value:y,text:String(y)});
+    tsAnoFim.addOption({value:y,text:String(y)});
+  }
+  tsAnoIni.setValue(1970,true);
+  tsAnoFim.setValue(2026,true);
+}
+
+/* ── Cascading: modelo ────────────────────────────────────── */
+async function updateModelos(){
+  tsMod.clear(true);tsMod.clearOptions();filters.modelo=[];
+  if(!filters.fabricante.length){tsMod.disable();return;}
+  const d=await q(`
+    SELECT DISTINCT Marca_Modelo FROM frota
+    WHERE Fabricante IN ('${filters.fabricante.join("','")}')
+    ORDER BY Marca_Modelo
+  `);
+  tsMod.enable();
+  tsMod.addOptions(d.Marca_Modelo.map(m=>({value:m,text:m})));
+}
+
+/* ── Cascading: município ─────────────────────────────────── */
+async function updateMunicipios(){
+  tsMun.clear(true);tsMun.clearOptions();filters.municipio=[];
+  if(!filters.uf.length){tsMun.disable();return;}
+  const d=await q(`
+    SELECT DISTINCT Municipio FROM frota
+    WHERE UF IN ('${filters.uf.join("','")}')
+    ORDER BY Municipio
+  `);
+  tsMun.enable();
+  tsMun.addOptions(d.Municipio.map(m=>({value:m,text:tc(m)})));
+}
+
+/* ── Render: mapa ─────────────────────────────────────────── */
+async function renderMap(d){
+  const siglas=[],totals=[],customd=[];
+  d.UF.forEach((u,i)=>{
+    const s=UF_SIGLA[u];
+    if(s){siglas.push(s);totals.push(d.total[i]);customd.push([tc(u),d.total[i]]);}
+  });
+  const trace={
+    type:'choropleth',geojson,locations:siglas,z:totals,
+    featureidkey:'properties.sigla',
+    colorscale:[[0,'#f0f7fb'],[.2,C.mist],[.5,C.cyan],[.78,C.steel],[1,C.deep]],
+    marker:{line:{color:'#fff',width:1.2}},
+    showscale:true,
+    colorbar:{thickness:9,len:.6,x:1.01,
+      tickfont:{color:C.label,size:9},
+      title:{text:'',font:{color:C.label}},
+      bgcolor:'rgba(0,0,0,0)'},
+    customdata:customd,
+    hovertemplate:'<b>%{customdata[0]}</b><br>%{customdata[1]:,.0f} motos<extra></extra>',
+  };
+  const layout={
+    ...BASE_LAYOUT,margin:{l:0,r:0,t:0,b:0},height:380,
+    geo:{fitbounds:'locations',visible:false,
+         bgcolor:'rgba(0,0,0,0)',showcoastlines:false},
+  };
+  await Plotly.react('g-mapa',[trace],layout,{displayModeBar:false,responsive:true});
+}
+
+/* ── Render: fabricantes ──────────────────────────────────── */
+async function renderFab(d){
+  const mx=Math.max(...d.total,1);
+  const trace={
+    type:'bar',x:d.total,y:d.fab,orientation:'h',
+    marker:{color:C.steel,opacity:.9,line:{width:0}},
+    text:d.total.map(fmt),textposition:'outside',
+    textfont:{color:C.label,size:10},cliponaxis:false,
+    hovertemplate:'<b>%{y}</b> — %{x:,.0f} motos<extra></extra>',
+  };
+  const layout={
+    ...BASE_LAYOUT,height:380,bargap:.3,
+    margin:{l:4,r:72,t:8,b:4},
+    xaxis:{showgrid:false,showticklabels:false,zeroline:false,range:[0,mx*1.45]},
+    yaxis:{showgrid:false,tickfont:{size:11,color:C.text},autorange:'reversed',automargin:true},
+  };
+  chartCache['g-fab']={traces:[trace],layout};
+  await Plotly.react('g-fab',[trace],layout,{displayModeBar:false,responsive:true});
+}
+
+/* ── Render: modelos ──────────────────────────────────────── */
+async function renderMod(d){
+  const mx=Math.max(...d.total,1);
+  const trace={
+    type:'bar',x:d.total,y:d.Marca_Modelo,orientation:'h',
+    marker:{color:C.cyan,opacity:.9,line:{width:0}},
+    text:d.total.map(fmt),textposition:'outside',
+    textfont:{color:C.label,size:10},cliponaxis:false,
+    hovertemplate:'<b>%{y}</b> — %{x:,.0f} motos<extra></extra>',
+  };
+  const layout={
+    ...BASE_LAYOUT,height:430,bargap:.24,
+    margin:{l:4,r:72,t:8,b:4},
+    xaxis:{showgrid:false,showticklabels:false,zeroline:false,range:[0,mx*1.45]},
+    yaxis:{showgrid:false,tickfont:{size:10,color:C.text},autorange:'reversed',automargin:true},
+  };
+  chartCache['g-modelos']={traces:[trace],layout};
+  await Plotly.react('g-modelos',[trace],layout,{displayModeBar:false,responsive:true});
+}
+
+/* ── Render: evolução ─────────────────────────────────────── */
+async function renderAno(d){
+  const trace={
+    type:'scatter',x:d.Ano_Fabricacao,y:d.total,mode:'lines+markers',
+    line:{color:C.deep,width:1.5,shape:'spline'},
+    marker:{size:5,color:C.deep,line:{width:0}},
+    hovertemplate:'<b>%{x}</b> — %{y:,.0f} motos<extra></extra>',
+  };
+  const layout={
+    ...BASE_LAYOUT,height:430,
+    margin:{l:56,r:16,t:8,b:56},
+    xaxis:{showgrid:false,zeroline:false,automargin:true,
+           tickfont:{size:10,color:C.label},tickmode:'linear',dtick:5,tickangle:-45},
+    yaxis:{showgrid:true,gridcolor:C.grid,zeroline:false,automargin:true,
+           tickfont:{size:10,color:C.label}},
+  };
+  chartCache['g-anos']={traces:[trace],layout};
+  await Plotly.react('g-anos',[trace],layout,{displayModeBar:false,responsive:true});
+}
+
+/* ── Render: municípios ───────────────────────────────────── */
+async function renderMun(d){
+  const labels=d.Municipio.map((m,i)=>`${tc(m)} / ${UF_SIGLA[d.UF[i]]||d.UF[i]}`);
+  const mx=Math.max(...d.total,1);
+  const trace={
+    type:'bar',x:labels,y:d.total,
+    marker:{color:C.steel,opacity:.9,line:{width:0}},
+    text:d.total.map(fmt),textposition:'outside',
+    textfont:{color:C.label,size:9},cliponaxis:false,
+    hovertemplate:'<b>%{x}</b> — %{y:,.0f} motos<extra></extra>',
+  };
+  const layout={
+    ...BASE_LAYOUT,height:310,bargap:.22,
+    margin:{l:48,r:16,t:32,b:4},
+    xaxis:{showgrid:false,tickfont:{size:9,color:C.label},tickangle:-35,
+           zeroline:false,automargin:true},
+    yaxis:{showgrid:true,gridcolor:C.grid,zeroline:false,automargin:true,
+           tickfont:{size:10,color:C.label},range:[0,mx*1.28]},
+  };
+  chartCache['g-munis']={traces:[trace],layout};
+  await Plotly.react('g-munis',[trace],layout,{displayModeBar:false,responsive:true});
+}
+
+/* ── Download CSV ─────────────────────────────────────────── */
+function downloadCSV(chartId){
+  const c=chartCache[chartId];
+  if(!c)return;
+  /* Re-query raw data for CSV using the last query result embedded in trace */
+  const t=c.traces[0];
+  let rows,headers;
+  if(t.orientation==='h'){
+    /* horizontal bar: x=values, y=labels */
+    headers=['Label','Total'];
+    rows=(t.y||[]).map((lbl,i)=>[`"${lbl}"`,t.x[i]].join(','));
+  } else if(t.type==='scatter'){
+    headers=['Ano','Total'];
+    rows=(t.x||[]).map((x,i)=>[x,t.y[i]].join(','));
+  } else {
+    headers=['Label','Total'];
+    rows=(t.x||[]).map((lbl,i)=>[`"${lbl}"`,t.y[i]].join(','));
+  }
+  const csv=[headers.join(','),...rows].join('\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download=`frota_motos_${chartId}_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();URL.revokeObjectURL(a.href);
+}
+
+/* ── Modal expand ─────────────────────────────────────────── */
+const EXP_TITLES={
+  'g-fab':'Top Fabricantes',
+  'g-modelos':'Top 15 Modelos',
+  'g-anos':'Evolução por Ano',
+  'g-munis':'Top 20 Municípios',
+};
+function openModal(id){
+  const c=chartCache[id];if(!c)return;
+  $('modal-title').textContent=EXP_TITLES[id]||'';
+  $('modal-overlay').classList.add('vis');
+  const layout={...c.layout,height:undefined,autosize:true};
+  Plotly.react('modal-graph',c.traces.map(t=>({...t})),layout,
+    {displayModeBar:true,responsive:true});
+}
+function closeModal(){$('modal-overlay').classList.remove('vis');}
+
+/* ── Tag de filtros activos ───────────────────────────────── */
+function updateTag(){
+  const p=[];
+  if(filters.modalidade.length) p.push(filters.modalidade.join(' · '));
+  if(filters.fabricante.length) p.push(filters.fabricante.join(' · '));
+  if(filters.modelo.length)     p.push(`${filters.modelo.length} modelo(s)`);
+  if(filters.uf.length)         p.push(filters.uf.map(tc).join(' · '));
+  if(filters.municipio.length)  p.push(`${filters.municipio.length} município(s)`);
+  if(filters.anoIni!==1970||filters.anoFim!==2026)
+    p.push(`${filters.anoIni}–${filters.anoFim}`);
+  $('active-tag').textContent=p.length?p.join('  ·  '):'Sem filtros activos';
+}
+
+/* ── Update principal ─────────────────────────────────────── */
+async function update(){
+  const w=buildWhere();
+
+  /* KPIs */
+  const kpi=await q(`
+    SELECT SUM(Qtd_Veiculos) AS total,
+           COUNT(DISTINCT Marca_Modelo) AS modelos,
+           COUNT(DISTINCT Municipio) AS munis,
+           COUNT(DISTINCT UF) AS estados
+    FROM frota WHERE ${w}
+  `);
+  const tot=kpi.total[0]??0, mod=kpi.modelos[0]??0;
+  $('k-total').textContent=fmt(tot);
+  $('k-modelos').textContent=fmt(mod);
+  $('k-munis').textContent=fmt(kpi.munis[0]);
+  $('k-estados').textContent=String(Math.round(kpi.estados[0]??0));
+  $('k-media').textContent=fmt(mod?tot/mod:0);
+
+  /* Queries paralelas */
+  const [mapD,fabD,modD,anoD,munD]=await Promise.all([
+    q(`SELECT UF,SUM(Qtd_Veiculos) AS total FROM frota WHERE ${w} GROUP BY UF ORDER BY total DESC`),
+    q(`SELECT Fabricante AS fab,SUM(Qtd_Veiculos) AS total FROM frota WHERE ${w} AND Fabricante IS NOT NULL AND Fabricante!='' GROUP BY Fabricante ORDER BY total DESC LIMIT 12`),
+    q(`SELECT Marca_Modelo,SUM(Qtd_Veiculos) AS total FROM frota WHERE ${w} GROUP BY Marca_Modelo ORDER BY total DESC LIMIT 15`),
+    q(`SELECT Ano_Fabricacao,SUM(Qtd_Veiculos) AS total FROM frota WHERE ${w} GROUP BY Ano_Fabricacao ORDER BY Ano_Fabricacao`),
+    q(`SELECT Municipio,UF,SUM(Qtd_Veiculos) AS total FROM frota WHERE ${w} GROUP BY Municipio,UF ORDER BY total DESC LIMIT 20`),
+  ]);
+
+  await Promise.all([
+    renderMap(mapD),
+    renderFab(fabD),
+    renderMod(modD),
+    renderAno(anoD),
+    renderMun(munD),
+  ]);
+  updateTag();
+}
+
+/* ── Tom Select init ──────────────────────────────────────── */
+function initSelects(){
+  const multi={plugins:['remove_button'],maxItems:null};
+
+  tsModal=new TomSelect('#f-modal',{...multi,
+    onChange:v=>{filters.modalidade=v||[];update();}});
+
+  tsFab=new TomSelect('#f-fab',{...multi,
+    onChange:async v=>{filters.fabricante=v||[];await updateModelos();await update();}});
+
+  tsMod=new TomSelect('#f-mod',{...multi,
+    onChange:v=>{filters.modelo=v||[];update();}});
+  tsMod.disable();
+
+  tsUf=new TomSelect('#f-uf',{...multi,
+    onChange:async v=>{filters.uf=v||[];await updateMunicipios();await update();}});
+
+  tsMun=new TomSelect('#f-mun',{...multi,
+    onChange:v=>{filters.municipio=v||[];update();}});
+  tsMun.disable();
+
+  tsAnoIni=new TomSelect('#f-ano-ini',{create:false,
+    onChange:v=>{filters.anoIni=Number(v);update();}});
+
+  tsAnoFim=new TomSelect('#f-ano-fim',{create:false,
+    onChange:v=>{filters.anoFim=Number(v);update();}});
+}
+
+/* ── Eventos ──────────────────────────────────────────────── */
+function wireEvents(){
+  /* Reset */
+  $('btn-reset').addEventListener('click',async()=>{
+    tsModal.clear(true);
+    tsFab.clear(true);
+    tsMod.clear(true);tsMod.clearOptions();tsMod.disable();
+    tsUf.clear(true);
+    tsMun.clear(true);tsMun.clearOptions();tsMun.disable();
+    tsAnoIni.setValue(1970,true);
+    tsAnoFim.setValue(2026,true);
+    Object.assign(filters,{modalidade:[],fabricante:[],modelo:[],
+      uf:[],municipio:[],anoIni:1970,anoFim:2026});
+    await update();
+  });
+
+  /* Download / Expand via event delegation */
+  document.addEventListener('click',e=>{
+    const btn=e.target.closest('.chart-btn');if(!btn)return;
+    if(btn.dataset.dl)  downloadCSV(btn.dataset.dl);
+    if(btn.dataset.exp) openModal(btn.dataset.exp);
+  });
+
+  /* Modal close */
+  $('modal-close').addEventListener('click',closeModal);
+  $('modal-overlay').addEventListener('click',e=>{
+    if(e.target===$('modal-overlay'))closeModal();
+  });
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
+}
+
+/* ── Click no mapa → filtra UF ───────────────────────────── */
+function onMapClick(data){
+  if(!data?.points?.[0])return;
+  const sigla=data.points[0].location;
+  if(!sigla)return;
+  const uf=SIGLA_UF[sigla];
+  if(!uf)return;
+  /* Alterna: se já está selecionado, remove; senão adiciona */
+  if(filters.uf.includes(uf)){
+    tsUf.removeItem(uf,false);
+  } else {
+    tsUf.addItem(uf,false);
+  }
+}
+
+/* ── Main ─────────────────────────────────────────────────── */
+async function main(){
+  try{
+    initSelects();
+    wireEvents();
+
+    /* GeoJSON do Brasil — properties.sigla já existe nesta fonte */
+    setLoad('Carregando mapa do Brasil…');
+    const geoResp=await fetch(
+      'https://raw.githubusercontent.com/codeforamerica/click_that_hood/master/public/data/brazil-states.geojson'
+    );
+    geojson=await geoResp.json();
+
+    await initDB();
+    await populateFilters();
+
+    setLoad('Renderizando…');
+    await update();
+
+    /* Wire click no mapa após primeiro render */
+    $('g-mapa').on('plotly_click',onMapClick);
+
+    hideLoad();
+  }catch(err){
+    console.error(err);
+    $('load-txt').textContent='Erro: '+err.message;
+  }
+}
+
+main();
+</script>
+</body>
+</html>
