@@ -96,6 +96,89 @@ html,body{height:100%;overflow:hidden;margin:0}
 #modal-close:hover{background:#f0f5f8;color:#1b4965}
 #modal-graph{flex:1;min-height:0}
 
+/* ── Hamburger (escondido no desktop) ── */
+#btn-menu{display:none}
+
+/* ── Sidebar overlay (drawer mobile) ── */
+#sidebar-overlay{display:none;position:fixed;inset:0;
+  background:rgba(27,73,101,.45);z-index:299;backdrop-filter:blur(3px)}
+#sidebar-overlay.vis{display:block}
+
+/* ── Cabeçalho do drawer (escondido no desktop) ── */
+.sb-mob-head{display:none}
+
+/* ════════════════════════════════════════
+   RESPONSIVO — iPhone / smartphone
+   ════════════════════════════════════════ */
+@media(max-width:767px){
+
+  /* Topbar */
+  #topbar{padding:.7rem 1rem;gap:8px}
+  .tb-eyebrow{display:none}
+  .tb-title{font-size:1rem;letter-spacing:-.02em}
+  #active-tag{display:none}
+  #btn-reset{font-size:.65rem;padding:5px 10px}
+
+  /* Botão hambúrguer */
+  #btn-menu{
+    display:flex;align-items:center;justify-content:center;
+    background:transparent;border:1px solid #e2eef5;border-radius:8px;
+    color:#1b4965;cursor:pointer;font-size:1.15rem;line-height:1;
+    padding:6px 11px;font-family:inherit;flex-shrink:0;transition:all .18s
+  }
+  #btn-menu:hover{background:#f0f5f8}
+
+  /* Sidebar vira drawer lateral */
+  #sidebar{
+    position:fixed;top:0;left:0;height:100vh;z-index:300;
+    transform:translateX(-100%);transition:transform .26s cubic-bezier(.2,.8,.2,1);
+    width:300px;box-shadow:6px 0 32px rgba(27,73,101,.18);
+    padding-top:0;border-right:none
+  }
+  #sidebar.open{transform:translateX(0)}
+
+  /* Cabeçalho do drawer */
+  .sb-mob-head{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:.9rem 1.2rem;border-bottom:1px solid #e2eef5;margin-bottom:.6rem;
+    flex-shrink:0
+  }
+  .sb-mob-title{
+    margin:0;font-size:.8rem;font-weight:700;color:#1b4965;letter-spacing:-.01em
+  }
+  #btn-sb-close{
+    background:transparent;border:1px solid #e2eef5;border-radius:6px;
+    color:#94b8cc;cursor:pointer;font-family:inherit;font-size:.9rem;
+    padding:4px 11px;transition:all .18s
+  }
+  #btn-sb-close:hover{background:#f0f5f8;color:#1b4965}
+
+  /* Body wrap */
+  #body-wrap{position:relative}
+
+  /* Main ocupa largura toda */
+  #main-content{padding:.75rem}
+
+  /* KPIs — 2 colunas */
+  #kpi-row{gap:8px}
+  .kpi-card{min-width:0;flex:1 1 calc(50% - 4px);padding:1rem 1.1rem}
+  .kpi-val{font-size:1.75rem}
+  .kpi-lbl{margin-bottom:10px;font-size:.55rem}
+
+  /* Gráficos empilhados */
+  .chart-row{flex-direction:column;gap:0}
+  .chart-card{margin-bottom:10px;padding:1rem}
+  .chart-row .chart-card{margin-bottom:10px}
+  .chart-lbl{font-size:.55rem}
+
+  /* Hint do mapa */
+  .sb-hint{font-size:.6rem}
+
+  /* Tom Select: fonte maior no toque */
+  .ts-wrapper .ts-control{font-size:.85rem!important}
+  .ts-dropdown{font-size:.85rem!important}
+}
+
 /* ── Loading ── */
 #loading-overlay{position:fixed;inset:0;background:rgba(27,73,101,.88);
   z-index:9999;display:flex;flex-direction:column;align-items:center;
@@ -130,9 +213,12 @@ html,body{height:100%;overflow:hidden;margin:0}
 
 <!-- Topbar -->
 <header id="topbar">
-  <div>
-    <p class="tb-eyebrow">SENATRAN · 1970 – 2026 · SÉRIE HISTÓRICA</p>
-    <h1 class="tb-title">Frota de Motos · Brasil</h1>
+  <div style="display:flex;align-items:center;gap:10px">
+    <button id="btn-menu" aria-label="Abrir filtros">☰</button>
+    <div>
+      <p class="tb-eyebrow">SENATRAN · 1970 – 2026 · SÉRIE HISTÓRICA</p>
+      <h1 class="tb-title">Frota de Motos · Brasil</h1>
+    </div>
   </div>
   <div class="tb-right">
     <span id="active-tag">Sem filtros activos</span>
@@ -145,6 +231,11 @@ html,body{height:100%;overflow:hidden;margin:0}
 
   <!-- Sidebar -->
   <aside id="sidebar">
+    <!-- cabeçalho visível apenas no mobile -->
+    <div class="sb-mob-head">
+      <p class="sb-mob-title">Filtros</p>
+      <button id="btn-sb-close" aria-label="Fechar filtros">✕</button>
+    </div>
     <div class="sb-sec">
       <p class="sb-lbl">Modalidade</p>
       <select id="f-modal" multiple placeholder="Todas as modalidades…">
@@ -187,8 +278,11 @@ html,body{height:100%;overflow:hidden;margin:0}
       </div>
     </div>
     <hr class="sb-hr">
-    <p class="sb-hint">Clique num estado no mapa para filtrar.</p>
+    <p class="sb-hint" id="map-hint">Clique num estado no mapa para filtrar.</p>
   </aside>
+
+  <!-- Overlay do drawer mobile -->
+  <div id="sidebar-overlay"></div>
 
   <!-- Main -->
   <main id="main-content">
@@ -333,6 +427,10 @@ const UF_SIGLA = {
 const SIGLA_UF = Object.fromEntries(Object.entries(UF_SIGLA).map(([k,v])=>[v,k]));
 
 /* GeoJSON: click_that_hood já tem properties.sigla = "AC", "SP" etc. */
+
+/* ── Responsivo ───────────────────────────────────────────── */
+const isMob = () => window.innerWidth < 768;
+function chartH(desk, mob){ return isMob() ? mob : desk; }
 
 /* ── Estado global ────────────────────────────────────────── */
 let db, conn, geojson;
@@ -489,7 +587,7 @@ async function renderMap(d){
     hovertemplate:'<b>%{customdata[0]}</b><br>%{customdata[1]:,.0f} motos<extra></extra>',
   };
   const layout={
-    ...BASE_LAYOUT,margin:{l:0,r:0,t:0,b:0},height:380,
+    ...BASE_LAYOUT,margin:{l:0,r:0,t:0,b:0},height:chartH(380,270),
     geo:{fitbounds:'locations',visible:false,
          bgcolor:'rgba(0,0,0,0)',showcoastlines:false},
   };
@@ -507,7 +605,7 @@ async function renderFab(d){
     hovertemplate:'<b>%{y}</b> — %{x:,.0f} motos<extra></extra>',
   };
   const layout={
-    ...BASE_LAYOUT,height:380,bargap:.3,
+    ...BASE_LAYOUT,height:chartH(380,300),bargap:.3,
     margin:{l:4,r:72,t:8,b:4},
     xaxis:{showgrid:false,showticklabels:false,zeroline:false,range:[0,mx*1.45]},
     yaxis:{showgrid:false,tickfont:{size:11,color:C.text},autorange:'reversed',automargin:true},
@@ -527,7 +625,7 @@ async function renderMod(d){
     hovertemplate:'<b>%{y}</b> — %{x:,.0f} motos<extra></extra>',
   };
   const layout={
-    ...BASE_LAYOUT,height:430,bargap:.24,
+    ...BASE_LAYOUT,height:chartH(430,380),bargap:.24,
     margin:{l:4,r:72,t:8,b:4},
     xaxis:{showgrid:false,showticklabels:false,zeroline:false,range:[0,mx*1.45]},
     yaxis:{showgrid:false,tickfont:{size:10,color:C.text},autorange:'reversed',automargin:true},
@@ -545,7 +643,7 @@ async function renderAno(d){
     hovertemplate:'<b>%{x}</b> — %{y:,.0f} motos<extra></extra>',
   };
   const layout={
-    ...BASE_LAYOUT,height:430,
+    ...BASE_LAYOUT,height:chartH(430,260),
     margin:{l:56,r:16,t:8,b:56},
     xaxis:{showgrid:false,zeroline:false,automargin:true,
            tickfont:{size:10,color:C.label},tickmode:'linear',dtick:5,tickangle:-45},
@@ -568,7 +666,7 @@ async function renderMun(d){
     hovertemplate:'<b>%{x}</b> — %{y:,.0f} motos<extra></extra>',
   };
   const layout={
-    ...BASE_LAYOUT,height:310,bargap:.22,
+    ...BASE_LAYOUT,height:chartH(310,280),bargap:.22,
     margin:{l:48,r:16,t:32,b:4},
     xaxis:{showgrid:false,tickfont:{size:9,color:C.label},tickangle:-35,
            zeroline:false,automargin:true},
@@ -640,6 +738,7 @@ function updateTag(){
 
 /* ── Update principal ─────────────────────────────────────── */
 async function update(){
+  if(isMob()) closeDrawer();
   const w=buildWhere();
 
   /* KPIs */
@@ -704,8 +803,25 @@ function initSelects(){
     onChange:v=>{filters.anoFim=Number(v);update();}});
 }
 
+/* ── Drawer mobile ────────────────────────────────────────── */
+function openDrawer(){
+  $('sidebar').classList.add('open');
+  $('sidebar-overlay').classList.add('vis');
+  document.body.style.overflow='hidden';
+}
+function closeDrawer(){
+  $('sidebar').classList.remove('open');
+  $('sidebar-overlay').classList.remove('vis');
+  document.body.style.overflow='';
+}
+
 /* ── Eventos ──────────────────────────────────────────────── */
 function wireEvents(){
+  /* Hambúrguer / fechar drawer */
+  $('btn-menu').addEventListener('click',openDrawer);
+  $('btn-sb-close').addEventListener('click',closeDrawer);
+  $('sidebar-overlay').addEventListener('click',closeDrawer);
+
   /* Reset */
   $('btn-reset').addEventListener('click',async()=>{
     tsModal.clear(true);
@@ -771,6 +887,11 @@ async function main(){
 
     /* Wire click no mapa após primeiro render */
     $('g-mapa').on('plotly_click',onMapClick);
+
+    /* Ajusta hint e viewport meta para mobile */
+    if(isMob()){
+      $('map-hint').textContent='Toque num estado no mapa para filtrar.';
+    }
 
     hideLoad();
   }catch(err){
